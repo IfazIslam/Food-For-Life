@@ -22,7 +22,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -35,9 +37,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.person_outline_rounded, color: AppTheme.primaryGreen),
+                  Icon(
+                    Icons.person_outline_rounded,
+                    color: AppTheme.primaryGreen,
+                  ),
                   SizedBox(width: 8),
-                  Text('Update Full Name', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Update Full Name',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -48,8 +56,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   hintText: 'Enter new name',
                   filled: true,
                   fillColor: const Color(0xFFF5F7F5),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  prefixIcon: const Icon(Icons.badge_outlined, color: AppTheme.primaryGreen),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.badge_outlined,
+                    color: AppTheme.primaryGreen,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -60,15 +74,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () async {
                     if (ctrl.text.trim().isNotEmpty) {
-                      await FirebaseFirestore.instance.collection('users').doc(uid).update({'name': ctrl.text.trim()});
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(uid)
+                          .update({'name': ctrl.text.trim()});
                       if (context.mounted) Navigator.pop(context);
                     }
                   },
-                  child: const Text('Update Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Update Name',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -85,7 +107,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -98,9 +122,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.lock_outline_rounded, color: AppTheme.primaryGreen),
+                  Icon(
+                    Icons.lock_outline_rounded,
+                    color: AppTheme.primaryGreen,
+                  ),
                   SizedBox(width: 8),
-                  Text('Reset Password', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Reset Password',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -112,8 +142,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   hintText: 'New password (min 6 chars)',
                   filled: true,
                   fillColor: const Color(0xFFF5F7F5),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  prefixIcon: const Icon(Icons.password_outlined, color: AppTheme.primaryGreen),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.password_outlined,
+                    color: AppTheme.primaryGreen,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -124,22 +160,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () async {
                     if (ctrl.text.trim().length >= 6) {
                       try {
-                        await FirebaseAuth.instance.currentUser?.updatePassword(ctrl.text.trim());
+                        await FirebaseAuth.instance.currentUser?.updatePassword(
+                          ctrl.text.trim(),
+                        );
                         if (context.mounted) {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password updated successfully")));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Password updated successfully"),
+                            ),
+                          );
                         }
                       } catch (e) {
-                        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                        if (context.mounted)
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(e.toString())));
                       }
                     }
                   },
-                  child: const Text('Update Password', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Update Password',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -156,7 +206,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -169,9 +221,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               const Row(
                 children: [
-                   Icon(Icons.location_on_outlined, color: AppTheme.primaryGreen),
-                   SizedBox(width: 8),
-                   Text('Update Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Icon(
+                    Icons.location_on_outlined,
+                    color: AppTheme.primaryGreen,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Update Location',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -187,8 +245,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   hintText: 'Enter your State/City (e.g. New York)',
                   filled: true,
                   fillColor: const Color(0xFFF5F7F5),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  prefixIcon: const Icon(Icons.map_outlined, color: AppTheme.primaryGreen),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.map_outlined,
+                    color: AppTheme.primaryGreen,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -199,16 +263,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () async {
                     if (ctrl.text.trim().isNotEmpty) {
-                      await FirebaseFirestore.instance.collection('users').doc(uid).update({'addressState': ctrl.text.trim()});
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(uid)
+                          .update({'addressState': ctrl.text.trim()});
                       if (context.mounted) Navigator.pop(context);
-                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Location updated! Your feed will now show local donations.")));
+                      if (mounted)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Location updated! Your feed will now show local donations.",
+                            ),
+                          ),
+                        );
                     }
                   },
-                  child: const Text('Save Location', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Save Location',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -227,7 +306,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: userAsync.when(
         data: (user) {
           if (user == null) return const Center(child: Text("Not logged in"));
-          
+
           return CustomScrollView(
             slivers: [
               // ── Modern Header ────────────────────────────────────
@@ -235,7 +314,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 expandedHeight: 180,
                 pinned: true,
                 backgroundColor: const Color(0xFF2E7D52),
-                title: const Text('Settings', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                title: const Text(
+                  'Settings',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 centerTitle: true,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
@@ -251,11 +336,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const SizedBox(height: 40),
-                          const Icon(Icons.settings_suggest_rounded, color: Colors.white24, size: 60),
+                          const Icon(
+                            Icons.settings_suggest_rounded,
+                            color: Colors.white24,
+                            size: 60,
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             user.email,
-                            style: const TextStyle(color: Colors.white70, fontSize: 13),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
@@ -267,51 +359,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               SliverList(
                 delegate: SliverChildListDelegate([
                   const SizedBox(height: 20),
-                  
+
                   _buildSectionTitle("ACCOUNT"),
-                  _SettingsCard(children: [
-                    _SettingsTile(
-                      icon: Icons.person_rounded,
-                      title: "Change Full Name",
-                      subtitle: user.name,
-                      onTap: () => _changeName(user.uid, user.name),
-                    ),
-                    _SettingsTile(
-                      icon: Icons.location_on_rounded,
-                      title: "Change Location",
-                      subtitle: user.addressState,
-                      onTap: () => _changeLocation(user.uid, user.addressState),
-                    ),
-                    _SettingsTile(
-                      icon: Icons.lock_rounded,
-                      title: "Update Password",
-                      subtitle: "Change your account access",
-                      onTap: _changePassword,
-                    ),
-                  ]),
+                  _SettingsCard(
+                    children: [
+                      _SettingsTile(
+                        icon: Icons.person_rounded,
+                        title: "Change Full Name",
+                        subtitle: user.name,
+                        onTap: () => _changeName(user.uid, user.name),
+                      ),
+                      _SettingsTile(
+                        icon: Icons.location_on_rounded,
+                        title: "Change Location",
+                        subtitle: user.addressState,
+                        onTap: () =>
+                            _changeLocation(user.uid, user.addressState),
+                      ),
+                      _SettingsTile(
+                        icon: Icons.lock_rounded,
+                        title: "Update Password",
+                        subtitle: "Change your account access",
+                        onTap: _changePassword,
+                      ),
+                    ],
+                  ),
 
                   _buildSectionTitle("PREFERENCES & INFO"),
-                  _SettingsCard(children: [
-                    const _SettingsTile(
-                      icon: Icons.info_outline_rounded,
-                      title: "App Version",
-                      subtitle: "1.0.0 (Stable)",
-                      showChevron: false,
-                    ),
-                    _SettingsTile(
-                      icon: Icons.description_outlined,
-                      title: "Terms & Privacy",
-                      onTap: () {},
-                    ),
-                    _SettingsTile(
-                      icon: Icons.share_rounded,
-                      title: "Tell a Friend",
-                      onTap: () {},
-                    ),
-                  ]),
+                  _SettingsCard(
+                    children: [
+                      const _SettingsTile(
+                        icon: Icons.info_outline_rounded,
+                        title: "App Version",
+                        subtitle: "1.0.1 (Stable)",
+                        showChevron: false,
+                      ),
+                      _SettingsTile(
+                        icon: Icons.description_outlined,
+                        title: "Terms & Privacy",
+                        onTap: () {},
+                      ),
+                      _SettingsTile(
+                        icon: Icons.share_rounded,
+                        title: "Tell a Friend",
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 20),
-                  
+
                   _SettingsCard(
                     color: Colors.red.shade50,
                     children: [
@@ -326,11 +423,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text("Logout"),
-                              content: const Text("Are you sure you want to sign out?"),
+                              content: const Text(
+                                "Are you sure you want to sign out?",
+                              ),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Stay")),
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text("Stay"),
+                                ),
                                 ElevatedButton(
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                  ),
                                   onPressed: () => Navigator.pop(context, true),
                                   child: const Text("Logout"),
                                 ),
@@ -338,6 +444,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                           );
                           if (confirm == true) {
+                            // Mark offline BEFORE signing out
+                            final uid = FirebaseAuth.instance.currentUser?.uid;
+                            if (uid != null) {
+                              await FirebaseFirestore.instance.collection('users').doc(uid).update({
+                                'isOnline': false,
+                                'lastSeen': FieldValue.serverTimestamp(),
+                              });
+                            }
                             await FirebaseAuth.instance.signOut();
                             if (mounted) context.go('/login');
                           }
@@ -345,7 +459,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 40),
                   const Center(
                     child: Text(
@@ -359,7 +473,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+        ),
         error: (e, s) => Center(child: Text(e.toString())),
       ),
     );
@@ -445,8 +561,16 @@ class _SettingsTile extends StatelessWidget {
           color: textColor ?? AppTheme.textMain,
         ),
       ),
-      subtitle: subtitle != null ? Text(subtitle!, style: const TextStyle(fontSize: 12)) : null,
-      trailing: showChevron ? const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey) : null,
+      subtitle: subtitle != null
+          ? Text(subtitle!, style: const TextStyle(fontSize: 12))
+          : null,
+      trailing: showChevron
+          ? const Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: Colors.grey,
+            )
+          : null,
       onTap: onTap,
     );
   }

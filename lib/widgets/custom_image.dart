@@ -62,56 +62,83 @@ class CustomAvatar extends StatelessWidget {
   final String? imageUrl;
   final double radius;
   final IconData placeholderIcon;
+  final bool isOnline;
 
   const CustomAvatar({
     super.key,
     this.imageUrl,
     this.radius = 24,
     this.placeholderIcon = Icons.person,
+    this.isOnline = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [Color(0xFF57AB74), Color(0xFF8BC4A2)],
-        ),
-      ),
-      child: CircleAvatar(
-        radius: radius,
-        backgroundColor: Colors.white,
-        child: ClipOval(
-          child: imageUrl != null && imageUrl!.isNotEmpty
-              ? CachedNetworkImage(
-                  imageUrl: imageUrl!,
-                  width: radius * 2,
-                  height: radius * 2,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Shimmer.fromColors(
-                    baseColor: Colors.grey.shade200,
-                    highlightColor: Colors.white,
-                    child: Container(
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(2),
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Color(0xFF57AB74), Color(0xFF8BC4A2)],
+            ),
+          ),
+          child: CircleAvatar(
+            radius: radius,
+            backgroundColor: Colors.white,
+            child: ClipOval(
+              child: imageUrl != null && imageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl!,
                       width: radius * 2,
                       height: radius * 2,
-                      color: Colors.white,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: Colors.grey.shade200,
+                        highlightColor: Colors.white,
+                        child: Container(
+                          width: radius * 2,
+                          height: radius * 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Icon(
+                        placeholderIcon,
+                        size: radius,
+                        color: AppTheme.primaryGreen,
+                      ),
+                    )
+                  : Icon(
+                      placeholderIcon,
+                      size: radius,
+                      color: AppTheme.primaryGreen,
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Icon(
-                    placeholderIcon,
-                    size: radius,
-                    color: AppTheme.primaryGreen,
-                  ),
-                )
-              : Icon(
-                  placeholderIcon,
-                  size: radius,
-                  color: AppTheme.primaryGreen,
-                ),
+            ),
+          ),
         ),
-      ),
+        if (isOnline)
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: radius * 0.6,
+              height: radius * 0.6,
+              decoration: BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

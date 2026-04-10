@@ -288,10 +288,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                           if (otherParticipants.isEmpty) return const SizedBox.shrink();
                           final otherUserId = otherParticipants.first;
 
-                          return FutureBuilder<DocumentSnapshot>(
-                            future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
+                          return StreamBuilder<DocumentSnapshot>(
+                            stream: FirebaseFirestore.instance.collection('users').doc(otherUserId).snapshots(),
                             builder: (context, userSnap) {
-                              if (!userSnap.hasData) return const SizedBox.shrink();
+                              if (!userSnap.hasData || !userSnap.data!.exists) return const SizedBox.shrink();
                               final otherUser = UserModel.fromMap(userSnap.data!.data() as Map<String, dynamic>, otherUserId);
                               
                               if (_searchQuery.isNotEmpty && !otherUser.name.toLowerCase().contains(_searchQuery.toLowerCase())) {
@@ -337,7 +337,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
         ),
         child: ListTile(
           onLongPress: () => _deleteChat(chat.chatId),
-          leading: _avatarWithGradient(otherUser.profileImageUrl),
+          leading: _avatarWithGradient(otherUser.profileImageUrl, isOnline: otherUser.isOnline),
           title: Text(otherUser.name, style: const TextStyle(fontWeight: FontWeight.bold)),
           subtitle: const Text('Wants to connect with you', style: TextStyle(color: Colors.orange, fontSize: 13)),
           trailing: Row(
@@ -361,7 +361,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       child: ListTile(
         onTap: isPending && isRequester ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatDetailScreen(chat: chat, otherUserId: otherUser.uid))),
         onLongPress: () => _deleteChat(chat.chatId),
-        leading: _avatarWithGradient(otherUser.profileImageUrl, isActive: !isPending),
+        leading: _avatarWithGradient(otherUser.profileImageUrl, isOnline: otherUser.isOnline),
         title: Row(
           children: [
             Expanded(child: Text(otherUser.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
@@ -397,11 +397,12 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  Widget _avatarWithGradient(String url, {bool isActive = true}) {
+  Widget _avatarWithGradient(String url, {bool isOnline = false}) {
     return CustomAvatar(
       imageUrl: url,
       radius: 24,
       placeholderIcon: Icons.person_rounded,
+      isOnline: isOnline,
     );
   }
 }

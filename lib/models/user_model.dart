@@ -10,6 +10,8 @@ class UserModel {
   final String addressState;
   final int impactPoints;
   final String profileImageUrl;
+  final bool isOnline;
+  final Timestamp? lastSeen;
 
   UserModel({
     required this.uid,
@@ -21,6 +23,8 @@ class UserModel {
     required this.addressState,
     this.impactPoints = 0,
     this.profileImageUrl = '',
+    this.isOnline = false,
+    this.lastSeen,
   });
 
   Map<String, dynamic> toMap() {
@@ -34,6 +38,8 @@ class UserModel {
       'addressState': addressState,
       'impactPoints': impactPoints,
       'profileImageUrl': profileImageUrl,
+      'isOnline': isOnline,
+      'lastSeen': lastSeen,
     };
   }
 
@@ -48,6 +54,8 @@ class UserModel {
       addressState: map['addressState'] ?? '',
       impactPoints: map['impactPoints']?.toInt() ?? 0,
       profileImageUrl: map['profileImageUrl'] ?? '',
+      isOnline: map['isOnline'] ?? false,
+      lastSeen: map['lastSeen'] as Timestamp?,
     );
   }
 }

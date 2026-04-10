@@ -183,8 +183,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ),
         boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 2))],
       ),
-      child: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance.collection('users').doc(widget.otherUserId).get(),
+      child: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance.collection('users').doc(widget.otherUserId).snapshots(),
         builder: (context, snapshot) {
           final u = snapshot.hasData && snapshot.data!.exists
               ? UserModel.fromMap(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id)
@@ -200,14 +200,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 Expanded(
                   child: Row(
                     children: [
-                      CustomAvatar(imageUrl: u.profileImageUrl, radius: 18, placeholderIcon: Icons.person_rounded),
+                      CustomAvatar(
+                        imageUrl: u.profileImageUrl, 
+                        radius: 18, 
+                        placeholderIcon: Icons.person_rounded,
+                        isOnline: u.isOnline,
+                      ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(u.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                          const Text('Online', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(u.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
+                            Text(
+                              u.isOnline 
+                                  ? 'Online' 
+                                  : (u.lastSeen != null ? 'Last seen \${timeago.format(u.lastSeen!.toDate())}' : 'Offline'), 
+                              style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

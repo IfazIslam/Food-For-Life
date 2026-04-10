@@ -4,6 +4,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foodforlife/utils/app_router.dart';
 import 'package:foodforlife/theme/app_theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:foodforlife/providers/auth_provider.dart';
 
 import 'dart:io';
 
@@ -19,12 +22,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
   
-  // Initialize Firebase without specific options for now,
-  // rely on google-services.json for Android.
   try {
     await Firebase.initializeApp();
-    
-    // Request notification permissions
     final messaging = FirebaseMessaging.instance;
     await messaging.requestPermission(
       alert: true,
@@ -32,7 +31,7 @@ void main() async {
       sound: true,
     );
   } catch (e) {
-    debugPrint("Firebase Initialization Error (Could mean google-services.json is missing): $e");
+    debugPrint("Firebase Initialization Error: $e");
   }
 
   runApp(
@@ -42,12 +41,57 @@ void main() async {
   );
 }
 
-class FoodForLifeApp extends ConsumerWidget {
+class FoodForLifeApp extends ConsumerStatefulWidget {
   const FoodForLifeApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FoodForLifeApp> createState() => _FoodForLifeAppState();
+}
+
+class _FoodForLifeAppState extends ConsumerState<FoodForLifeApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _updateStatus(true);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed || state == AppLifecycleState.inactive) {
+      _updateStatus(true);
+    } else {
+      _updateStatus(false);
+    }
+  }
+
+  void _updateStatus(bool isOnline) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'isOnline': isOnline,
+        'lastSeen': isOnline ? null : FieldValue.serverTimestamp(),
+      }).catchError((e) => debugPrint("Error updating status: $e"));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+
+    // Listen to auth changes to update status immediately on login/logout
+    ref.listen(authStateProvider, (previous, next) {
+      if (next.value != null) {
+        // User logged in
+        _updateStatus(true);
+      }
+    });
 
     return MaterialApp.router(
       title: 'Food for Life',
