@@ -180,7 +180,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               ],
             ),
           ),
-          if (isActionable && !notif.isRead && notif.chatId != null)
+          if (isActionable && notif.chatId != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Row(

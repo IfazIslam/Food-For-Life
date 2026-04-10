@@ -10,6 +10,7 @@ import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/imgbb_service.dart';
+import '../widgets/custom_image.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -303,13 +304,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         colors: [Colors.amber, Color(0xFF57AB74)],
                                       ),
                                     ),
-                                    child: CircleAvatar(
+                                    child: CustomAvatar(
+                                      imageUrl: user.profileImageUrl,
                                       radius: 46,
-                                      backgroundColor: Colors.white,
-                                      backgroundImage: user.profileImageUrl.isNotEmpty ? NetworkImage(user.profileImageUrl) : null,
-                                      child: _isUploadingPfp
-                                          ? const CircularProgressIndicator(color: AppTheme.primaryGreen)
-                                          : (user.profileImageUrl.isEmpty ? const Icon(Icons.person, size: 46, color: AppTheme.primaryGreen) : null),
+                                      placeholderIcon: Icons.person,
                                     ),
                                   ),
                                   Positioned(
@@ -568,20 +566,11 @@ class _DonationCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                    child: post.imageUrl.isNotEmpty
-                        ? Image.network(
-                            post.imageUrl,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: AppTheme.washedOutGreen,
-                              child: const Center(child: Icon(Icons.fastfood_rounded, color: AppTheme.primaryGreen, size: 36)),
-                            ),
-                          )
-                        : Container(
-                            color: AppTheme.washedOutGreen,
-                            child: const Center(child: Icon(Icons.fastfood_rounded, color: AppTheme.primaryGreen, size: 36)),
-                          ),
+                    child: CustomNetworkImage(
+                      imageUrl: post.imageUrl,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
                   ),
                   // Expired overlay
                   if (isExpired)

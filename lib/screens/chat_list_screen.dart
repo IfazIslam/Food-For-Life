@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import 'chat_detail_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../widgets/custom_image.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
@@ -397,22 +398,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   }
 
   Widget _avatarWithGradient(String url, {bool isActive = true}) {
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: isActive 
-              ? [const Color(0xFF57AB74), const Color(0xFF8BC4A2)] 
-              : [Colors.grey.shade400, Colors.grey.shade300],
-        ),
-      ),
-      child: CircleAvatar(
-        radius: 24,
-        backgroundColor: Colors.white,
-        backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
-        child: url.isEmpty ? const Icon(Icons.person_rounded, color: AppTheme.primaryGreen) : null,
-      ),
+    return CustomAvatar(
+      imageUrl: url,
+      radius: 24,
+      placeholderIcon: Icons.person_rounded,
     );
   }
 }

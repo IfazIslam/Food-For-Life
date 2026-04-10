@@ -9,6 +9,8 @@ import 'notifications_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:uuid/uuid.dart';
+import '../widgets/custom_image.dart';
+import '../widgets/feed_details_modal.dart';
 
 class FeedsScreen extends ConsumerStatefulWidget {
   const FeedsScreen({super.key});
@@ -42,51 +44,106 @@ class _FeedsScreenState extends ConsumerState<FeedsScreen> {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
     
+    if (currentUser.uid == feed.donorUid) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("You cannot request your own food!")));
+      }
+      return;
+    }
+    
     try {
-      // Prevent duplicate requests
-      final existingChat = await FirebaseFirestore.instance.collection('chats')
-          .where('feedIdRequested', isEqualTo: feed.feedId)
+      // 1. Check for any existing chat between these two users
+      final chatQuery = await FirebaseFirestore.instance.collection('chats')
           .where('participants', arrayContains: currentUser.uid)
           .get();
-
-      if (existingChat.docs.isNotEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You have already requested this. Check your chats!')));
+          
+      DocumentSnapshot? existingChatDoc;
+      for (var doc in chatQuery.docs) {
+        List<dynamic> parts = doc.data()['participants'] ?? [];
+        if (parts.contains(feed.donorUid)) {
+          existingChatDoc = doc;
+          break;
         }
-        return;
       }
 
-      final chatId = const Uuid().v4();
-      await FirebaseFirestore.instance.collection('chats').doc(chatId).set({
-        'chatId': chatId,
-        'participants': [currentUser.uid, feed.donorUid],
-        'feedIdRequested': feed.feedId,
-        'accepted': false,
-        'completed': false,
-        'status': 'pending',
-        'initiatorUid': currentUser.uid,
-        'messages': [
-          {
-            'senderId': currentUser.uid,
-            'text': "I want this",
-            'timestamp': Timestamp.now(),
+      if (existingChatDoc != null) {
+        final chatId = existingChatDoc.id;
+        final data = existingChatDoc.data() as Map<String, dynamic>;
+        
+        // 2. If it's the exact same feed again, prevent duplicate
+        if (data['feedIdRequested'] == feed.feedId && data['completed'] == false) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You have already requested this. Check your chats!')));
           }
-        ]
-      });
-      // Send notification
-      await FirebaseFirestore.instance.collection('notifications').doc().set({
-        'id': const Uuid().v4(),
-        'targetUid': feed.donorUid,
-        'senderUid': currentUser.uid,
-        'chatId': chatId,
-        'title': 'New Food Request',
-        'body': '${currentUser.name} requested ${feed.foodName}',
-        'type': 'request',
-        'isRead': false,
-        'timestamp': Timestamp.now(),
-      });
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request sent!')));
+          return;
+        }
+
+        // 3. Reuse existing chat: update transaction fields and add message
+        final newMessage = {
+          'senderId': currentUser.uid,
+          'text': "I want this (${feed.foodName})",
+          'timestamp': Timestamp.now(),
+        };
+
+        await FirebaseFirestore.instance.collection('chats').doc(chatId).update({
+          'feedIdRequested': feed.feedId,
+          'accepted': false,
+          'completed': false,
+          'initiatorUid': currentUser.uid, // Mark current requester as initiator of this request
+          'messages': FieldValue.arrayUnion([newMessage]),
+        });
+
+        // 4. Send notification
+        await FirebaseFirestore.instance.collection('notifications').doc().set({
+          'id': const Uuid().v4(),
+          'targetUid': feed.donorUid,
+          'senderUid': currentUser.uid,
+          'chatId': chatId,
+          'title': 'New Food Request',
+          'body': '${currentUser.name} requested ${feed.foodName}',
+          'type': 'request',
+          'isRead': false,
+          'timestamp': Timestamp.now(),
+        });
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request updated in existing chat!')));
+        }
+      } else {
+        // 5. No existing chat: create new one
+        final chatId = const Uuid().v4();
+        await FirebaseFirestore.instance.collection('chats').doc(chatId).set({
+          'chatId': chatId,
+          'participants': [currentUser.uid, feed.donorUid],
+          'feedIdRequested': feed.feedId,
+          'accepted': false,
+          'completed': false,
+          'status': 'pending', // New chats start as pending
+          'initiatorUid': currentUser.uid,
+          'messages': [
+            {
+              'senderId': currentUser.uid,
+              'text': "I want this (${feed.foodName})",
+              'timestamp': Timestamp.now(),
+            }
+          ]
+        });
+
+        await FirebaseFirestore.instance.collection('notifications').doc().set({
+          'id': const Uuid().v4(),
+          'targetUid': feed.donorUid,
+          'senderUid': currentUser.uid,
+          'chatId': chatId,
+          'title': 'New Food Request',
+          'body': '${currentUser.name} requested ${feed.foodName}',
+          'type': 'request',
+          'isRead': false,
+          'timestamp': Timestamp.now(),
+        });
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request sent and new chat created!')));
+        }
       }
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
@@ -157,8 +214,11 @@ class _FeedsScreenState extends ConsumerState<FeedsScreen> {
             padding: const EdgeInsets.all(16),
             itemCount: feeds.length,
             itemBuilder: (context, i) {
-              return _FeedCard(feed: feeds[i], onRequest: (f) => _requestFood(context, f, ref))
-                  .animate().fade().slideY(begin: 0.2);
+              return _FeedCard(
+                feed: feeds[i], 
+                currentUid: user.uid,
+                onRequest: (f) => _requestFood(context, f, ref),
+              ).animate().fade().slideY(begin: 0.2);
             },
           );
         },
@@ -167,123 +227,92 @@ class _FeedsScreenState extends ConsumerState<FeedsScreen> {
   }
 }
 
-class _FeedCard extends StatefulWidget {
+class _FeedCard extends StatelessWidget {
   final FeedModel feed;
+  final String currentUid;
   final Function(FeedModel) onRequest;
 
-  const _FeedCard({required this.feed, required this.onRequest});
-
-  @override
-  State<_FeedCard> createState() => _FeedCardState();
-}
-
-class _FeedCardState extends State<_FeedCard> {
-  bool _isExpanded = false;
+  const _FeedCard({required this.feed, required this.currentUid, required this.onRequest});
 
   @override
   Widget build(BuildContext context) {
-    final expiryTime = widget.feed.postedAt.add(Duration(hours: widget.feed.timeDurationHours));
+    final expiryTime = feed.postedAt.add(Duration(hours: feed.timeDurationHours));
     final durationLeft = expiryTime.difference(DateTime.now());
     final isExpired = durationLeft.isNegative;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ListTile(
-            leading: CircleAvatar(
-              backgroundColor: AppTheme.washedOutGreen,
-              backgroundImage: widget.feed.donorProfileImage.isNotEmpty ? NetworkImage(widget.feed.donorProfileImage) : null,
-              child: widget.feed.donorProfileImage.isEmpty ? const Icon(Icons.person, color: AppTheme.primaryGreen) : null,
+      child: InkWell(
+        onTap: () => FeedDetailsModal.show(context, feed, currentUid, onRequest),
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              leading: CustomAvatar(imageUrl: feed.donorProfileImage, radius: 20),
+              title: Text(feed.donorName, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(timeago.format(feed.postedAt)),
+              trailing: Text(feed.tag, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
             ),
-            title: Text(widget.feed.donorName, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(timeago.format(widget.feed.postedAt)),
-            trailing: Text(widget.feed.tag, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
-          ),
-          if (widget.feed.imageUrl.isNotEmpty)
-            Image.network(
-              widget.feed.imageUrl, 
-              height: 250, 
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return Container(
-                  height: 250,
-                  color: AppTheme.washedOutGreen.withOpacity(0.3),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      value: progress.expectedTotalBytes != null
-                          ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
-                          : null,
-                      color: AppTheme.primaryGreen,
-                    ),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stack) => Container(
-                height: 250,
-                color: AppTheme.washedOutGreen.withOpacity(0.5),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            CustomNetworkImage(
+              imageUrl: feed.imageUrl,
+              height: 250,
+              width: double.infinity,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.broken_image, color: AppTheme.primaryGreen, size: 40),
-                      SizedBox(height: 8),
-                      Text('Image unavailable', style: TextStyle(color: AppTheme.textSecondary)),
+                      Expanded(
+                        child: Text(
+                          feed.foodName,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textMain),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isExpired ? Colors.red.withOpacity(0.1) : AppTheme.primaryGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          isExpired ? "Expired" : "${durationLeft.inHours}h ${durationLeft.inMinutes.remainder(60)}m left",
+                          style: TextStyle(
+                            color: isExpired ? Colors.red : AppTheme.primaryGreen,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(widget.feed.foodName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isExpired ? Colors.red.withOpacity(0.1) : AppTheme.primaryGreen.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => FeedDetailsModal.show(context, feed, currentUid, onRequest),
+                        style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                        child: const Text("View Details", style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
                       ),
-                      child: Text(
-                        isExpired ? "Expired" : "${durationLeft.inHours}h ${durationLeft.inMinutes.remainder(60)}m left",
-                        style: TextStyle(color: isExpired ? Colors.red : AppTheme.primaryGreen, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.feed.description,
-                  maxLines: _isExpanded ? null : 2,
-                  overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppTheme.textSecondary),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: () => setState(() => _isExpanded = !_isExpanded),
-                      child: Text(_isExpanded ? "Collapse" : "Expand Description", style: const TextStyle(color: AppTheme.primaryGreen)),
-                    ),
-                    const Spacer(),
-                    if (_isExpanded && !isExpired)
+                      const Spacer(),
                       ElevatedButton(
-                        onPressed: () => widget.onRequest(widget.feed),
-                        child: const Text("Request Food"),
+                        onPressed: () => FeedDetailsModal.show(context, feed, currentUid, onRequest),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: (feed.donorUid == currentUid || isExpired) ? Colors.grey : AppTheme.primaryGreen,
+                        ),
+                        child: Text(feed.donorUid == currentUid ? "My Post" : "Request Food"),
                       ),
-                  ],
-                ),
-              ],
-            ),
-          )
-        ],
+                    ],
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

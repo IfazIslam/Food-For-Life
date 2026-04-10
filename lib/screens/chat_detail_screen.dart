@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import 'user_details_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:uuid/uuid.dart';
+import '../widgets/custom_image.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final ChatModel chat;
@@ -100,6 +101,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       'messages': FieldValue.arrayUnion([systemMsg.toMap()])
     });
   }
+  
+  Future<void> _acceptChat() async {
+    await FirebaseFirestore.instance.collection('chats').doc(widget.chat.chatId).update({'status': 'accepted'});
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chat request accepted!')));
+  }
+
+  Future<void> _declineChat() async {
+    await FirebaseFirestore.instance.collection('chats').doc(widget.chat.chatId).delete();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chat request declined.')));
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,12 +200,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 Expanded(
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.white24,
-                        backgroundImage: u.profileImageUrl.isNotEmpty ? NetworkImage(u.profileImageUrl) : null,
-                        child: u.profileImageUrl.isEmpty ? const Icon(Icons.person_rounded, color: Colors.white, size: 20) : null,
-                      ),
+                      CustomAvatar(imageUrl: u.profileImageUrl, radius: 18, placeholderIcon: Icons.person_rounded),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,21 +229,48 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Widget _buildStatusBanner(ChatModel chatData, UserModel currentUser) {
     if (chatData.status == 'pending') {
+      final isInitiator = chatData.initiatorUid == currentUser.uid;
       return Container(
         width: double.infinity,
         margin: const EdgeInsets.all(12),
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange.shade200)),
-        child: Row(
+        decoration: BoxDecoration(color: isInitiator ? Colors.orange.shade50 : Colors.amber.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: isInitiator ? Colors.orange.shade200 : Colors.amber.shade200)),
+        child: Column(
           children: [
-            const Icon(Icons.hourglass_empty_rounded, color: Colors.orange, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                chatData.initiatorUid == currentUser.uid ? 'Waiting for response...' : 'Chat request pending approval',
-                style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.w600, fontSize: 12),
-              ),
+            Row(
+              children: [
+                Icon(isInitiator ? Icons.hourglass_empty_rounded : Icons.person_add_rounded, color: isInitiator ? Colors.orange : Colors.amber, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isInitiator ? 'Waiting for response...' : 'Sent you a chat request',
+                    style: TextStyle(color: isInitiator ? Colors.orange : Colors.amber.shade900, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ),
+              ],
             ),
+            if (!isInitiator) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen, foregroundColor: Colors.white, elevation: 0),
+                      onPressed: _acceptChat,
+                      child: const Text("Accept", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), elevation: 0),
+                      onPressed: _declineChat,
+                      child: const Text("Decline", style: TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       );
