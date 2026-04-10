@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "896122184968",
+    "project_id": "food-for-life-acf5d",
+    "storage_bucket": "food-for-life-acf5d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:896122184968:android:71784e558b3e49629f38bd",
+        "android_client_info": {
+          "package_name": "com.ifazislamshovon.foodforlife"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDxMhithQu6z1xmW1t4QV93yqfJCVVafs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
