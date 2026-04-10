@@ -6,6 +6,7 @@ import '../models/chat_model.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
+import 'user_details_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:uuid/uuid.dart';
 
@@ -168,42 +169,51 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ),
         boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 2))],
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance.collection('users').doc(widget.otherUserId).get(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox.shrink();
-              final u = UserModel.fromMap(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id);
-              
-              return Expanded(
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.white24,
-                      backgroundImage: u.profileImageUrl.isNotEmpty ? NetworkImage(u.profileImageUrl) : null,
-                      child: u.profileImageUrl.isEmpty ? const Icon(Icons.person_rounded, color: Colors.white, size: 20) : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(u.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                        const Text('Online', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                      ],
-                    ),
-                  ],
+      child: FutureBuilder<DocumentSnapshot>(
+        future: FirebaseFirestore.instance.collection('users').doc(widget.otherUserId).get(),
+        builder: (context, snapshot) {
+          final u = snapshot.hasData && snapshot.data!.exists
+              ? UserModel.fromMap(snapshot.data!.data() as Map<String, dynamic>, snapshot.data!.id)
+              : null;
+
+          return Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+              if (u != null) ...[
+                Expanded(
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.white24,
+                        backgroundImage: u.profileImageUrl.isNotEmpty ? NetworkImage(u.profileImageUrl) : null,
+                        child: u.profileImageUrl.isEmpty ? const Icon(Icons.person_rounded, color: Colors.white, size: 20) : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(u.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                          const Text('Online', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              );
-            },
-          ),
-          IconButton(icon: const Icon(Icons.info_outline_rounded, color: Colors.white70), onPressed: () {}),
-        ],
+                IconButton(
+                  icon: const Icon(Icons.info_outline_rounded, color: Colors.white70),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => UserDetailsScreen(user: u))),
+                ),
+              ] else ...[
+                const Spacer(),
+                const SizedBox(width: 48),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
