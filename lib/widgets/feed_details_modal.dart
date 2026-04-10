@@ -136,7 +136,7 @@ class FeedDetailsModal extends StatelessWidget {
 
                     const SizedBox(height: 8),
                     Text(
-                      "Posted \${timeago.format(feed.postedAt)}",
+                      "Posted ${timeago.format(feed.postedAt)}",
                       style: const TextStyle(color: Colors.grey, fontSize: 13),
                     ),
 

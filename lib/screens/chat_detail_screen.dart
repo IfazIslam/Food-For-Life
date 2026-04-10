@@ -216,7 +216,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                             Text(
                               u.isOnline 
                                   ? 'Online' 
-                                  : (u.lastSeen != null ? 'Last seen \${timeago.format(u.lastSeen!.toDate())}' : 'Offline'), 
+                                  : (u.lastSeen != null ? 'Last seen ${timeago.format(u.lastSeen!.toDate())}' : 'Offline'), 
                               style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11),
                             ),
                           ],
