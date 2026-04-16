@@ -11,6 +11,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:uuid/uuid.dart';
 import '../widgets/custom_image.dart';
 import '../widgets/feed_details_modal.dart';
+import '../providers/notification_provider.dart';
 
 class FeedsScreen extends ConsumerStatefulWidget {
   const FeedsScreen({super.key});
@@ -167,9 +168,20 @@ class _FeedsScreenState extends ConsumerState<FeedsScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_rounded, size: 28),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+          Consumer(
+            builder: (context, ref, child) {
+              final unreadCount = ref.watch(unreadNotificationsCountProvider).value ?? 0;
+              return Badge(
+                label: Text(unreadCount.toString()),
+                isLabelVisible: unreadCount > 0,
+                backgroundColor: Colors.red,
+                offset: const Offset(-4, 4),
+                child: IconButton(
+                  icon: const Icon(Icons.notifications_rounded, size: 28),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+                ),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.add_circle_rounded, size: 30),

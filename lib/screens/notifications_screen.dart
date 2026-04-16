@@ -22,7 +22,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   Future<void> _acceptChat(String chatId, String notifId) async {
     await FirebaseFirestore.instance.collection('chats').doc(chatId).update({'status': 'accepted'});
-    await FirebaseFirestore.instance.collection('notifications').doc(notifId).update({'isRead': true});
+    await FirebaseFirestore.instance.collection('notifications').doc(notifId).delete();
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request accepted!')));
   }
 
